@@ -1,21 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './styles';
+import { firebase } from '../../firebase/config';
+import { UserContext, UserDispatchContext } from '../../UserProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Go back and fix type safety for navigation prop
-// Stack Overflow: https://stackoverflow.com/questions/63132548/react-navigation-5-error-binding-element-navigation-implicitly-has-an-any-ty
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const user = useContext(UserContext);
+  const setUser = useContext(UserDispatchContext);
 
   const onFooterLinkPress = () => {
     navigation.navigate('Login');
   };
 
-  const onRegisterPress = () => {};
+  const onRegisterPress = () => {
+    if (password != confirmPassword) {
+      alert('Passwords do not match.');
+      return;
+    }
+    firebase
+      .auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then((response) => {
+        const uid = response.user.uid;
+        const data = {
+          id: uid,
+          email,
+          fullName,
+        };
+        const usersRef = firebase.firestore().collection('users');
+        usersRef.doc(uid).set(data);
+        setUser(data); // add this to global state, like some sort of token
+        AsyncStorage.setItem('token', uid);
+      })
+      .catch((err) => {
+        alert(err);
+      });
+  };
 
   return (
     <View style={styles.container}>

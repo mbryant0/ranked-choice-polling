@@ -1,17 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './styles';
+import { firebase } from '../../firebase/config';
+import { UserContext, UserDispatchContext } from '../../UserProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const user = useContext(UserContext);
+  const setUser = useContext(UserDispatchContext);
 
   const onFooterLinkPress = () => {
     navigation.navigate('Signup');
   };
 
-  const onLoginPress = () => {};
+  const onLoginPress = () => {
+    firebase
+      .auth()
+      .signInWithEmailAndPassword(email, password)
+      .then((response) => {
+        const uid = response.user.uid;
+        const usersRef = firebase.firestore().collection('users');
+        usersRef
+          .doc(uid)
+          .get()
+          .then((firestoreDocument) => {
+            if (!firestoreDocument.exists) {
+              alert('User does not exist anymore.');
+              return;
+            }
+            setUser(firestoreDocument.data());
+            AsyncStorage.setItem('token', uid);
+          })
+          .catch((error) => {
+            alert(error);
+          });
+      })
+      .catch((error) => {
+        alert(error);
+      });
+  };
 
   return (
     <View style={styles.container}>
