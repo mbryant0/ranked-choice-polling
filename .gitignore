@@ -192,3 +192,6 @@ buck-out/
 # Expo
 .expo/*
 web-build/
+
+**/config
+**/config.js
