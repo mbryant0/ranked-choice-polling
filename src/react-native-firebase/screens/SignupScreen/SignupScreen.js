@@ -3,26 +3,23 @@ import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './styles';
 import { firebase } from '../../firebase/config';
-import { UserContext, UserDispatchContext } from '../../UserProvider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const user = useContext(UserContext);
-  const setUser = useContext(UserDispatchContext);
 
   const onFooterLinkPress = () => {
     navigation.navigate('Login');
   };
 
   const onRegisterPress = () => {
-    if (password != confirmPassword) {
-      alert('Passwords do not match.');
+    if (password !== confirmPassword) {
+      alert("Passwords don't match.");
       return;
     }
+
     firebase
       .auth()
       .createUserWithEmailAndPassword(email, password)
@@ -34,12 +31,18 @@ export default function SignupScreen({ navigation }) {
           fullName,
         };
         const usersRef = firebase.firestore().collection('users');
-        usersRef.doc(uid).set(data);
-        setUser(data); // add this to global state, like some sort of token
-        AsyncStorage.setItem('token', uid);
+        usersRef
+          .doc(uid)
+          .set(data)
+          .then(() => {
+            navigation.navigate('Home', { user: data });
+          })
+          .catch((error) => {
+            alert(error);
+          });
       })
-      .catch((err) => {
-        alert(err);
+      .catch((error) => {
+        alert(error);
       });
   };
 

@@ -3,14 +3,10 @@ import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import styles from './styles';
 import { firebase } from '../../firebase/config';
-import { UserContext, UserDispatchContext } from '../../UserProvider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const user = useContext(UserContext);
-  const setUser = useContext(UserDispatchContext);
 
   const onFooterLinkPress = () => {
     navigation.navigate('Signup');
@@ -31,8 +27,8 @@ export default function LoginScreen({ navigation }) {
               alert('User does not exist anymore.');
               return;
             }
-            setUser(firestoreDocument.data());
-            AsyncStorage.setItem('token', uid);
+            const user = firestoreDocument.data();
+            navigation.navigate('Home', { user: user });
           })
           .catch((error) => {
             alert(error);
@@ -42,7 +38,6 @@ export default function LoginScreen({ navigation }) {
         alert(error);
       });
   };
-
   return (
     <View style={styles.container}>
       <KeyboardAwareScrollView
